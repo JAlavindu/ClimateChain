@@ -18,7 +18,8 @@ class TransactionBuilder:
         )
         
         # Group by Transaction ID and get unique items in that bucket
-        transactions = df_exploded.groupby('TRANSACTION_ID')['ITEMS'].unique().reset_index()
+        # FIX: apply(list) converts the numpy arrays back into safe python lists for JSON serialization
+        transactions = df_exploded.groupby('TRANSACTION_ID')['ITEMS'].unique().apply(list).reset_index()
         
         # Optional metadata for later NoSQL insertion
         transactions['STATE'] = transactions['TRANSACTION_ID'].apply(lambda x: x.split('_')[0])
