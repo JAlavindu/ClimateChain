@@ -1,9 +1,13 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 BASE_DIR = Path(__file__).parent.parent
 RAW_DATA_PATH = BASE_DIR / "data" / "raw"
 PROCESSED_DATA_PATH = BASE_DIR / "data" / "processed"
+
+MONGO_URI = os.getenv("ATLAS_URI", "mongodb://localhost:27017/")
 
 # Thresholds for discretizing continuous variables
 THRESHOLDS = {
