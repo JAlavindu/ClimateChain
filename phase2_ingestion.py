@@ -15,7 +15,7 @@ def run_phase_2():
     mongo.setup_indexes()
 
     print("2. Loading formatted JSON transactions...")
-    json_path = os.path.join(PROCESSED_DATA_PATH, "climate_transactions.json")
+    json_path = os.path.join(PROCESSED_DATA_PATH, "sequenced_transactions.json")
     
     transactions_list = []
     with open(json_path, 'r') as f:
