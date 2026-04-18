@@ -16,7 +16,7 @@ def run_phase_3():
     
     print(f"Loaded {len(transactions)} multi-event transactions from NoSQL DB.")
     
-    miner = RuleMiner(min_support=0.01, min_confidence=0.2)
+    miner = RuleMiner(min_support=0.005, min_confidence=0.1)
     rules_df = miner.mine_rules(transactions)
     
     if rules_df.empty:
