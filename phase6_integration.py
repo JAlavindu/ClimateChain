@@ -12,7 +12,6 @@ def run_phase_6():
     nasa_df = pd.read_csv(nasa_path)
 
     print("2. Discretizing NASA Data (Percentile-based Anomalies)...")
-    # Group by state to find local anomalies. We split data into 5 quantiles (20% bins).
     def discretize_temp(x):
         return pd.qcut(x, q=5, labels=['EXTREME_COLD', 'COLD', 'NORMAL_T', 'WARM', 'EXTREME_HEAT'], duplicates='drop')
 
@@ -22,7 +21,6 @@ def run_phase_6():
     nasa_df['TEMP_CAT'] = nasa_df.groupby('STATE')['T2M'].transform(discretize_temp)
     nasa_df['RAIN_CAT'] = nasa_df.groupby('STATE')['PRECTOTCORR'].transform(discretize_rain)
 
-    # Filter to only keep TRUE extremes as market basket items
     def extract_nasa_items(row):
         items = []
         if row['TEMP_CAT'] in ['EXTREME_HEAT', 'EXTREME_COLD']:
@@ -34,7 +32,12 @@ def run_phase_6():
     nasa_df['NASA_ITEMS'] = nasa_df.apply(extract_nasa_items, axis=1)
 
     print("3. Merging NOAA and NASA Data...")
-    # Create matching ID (Transaction ID format: STATE_YEAR_MONTH)
+    # CLEAN THE TRANSACTION IDs DIRECTLY TO AVOID DATA TYPE MISMATCH
+    # Strip any decimal points like '.0' from the NOAA Transaction IDs
+    noaa_df['TRANSACTION_ID'] = noaa_df['TRANSACTION_ID'].str.replace(r'\.0_', '_', regex=True)
+
+    noaa_df['TRANSACTION_ID'] = noaa_df['TRANSACTION_ID'].str.upper()
+
     nasa_df['MONTH_NAME'] = nasa_df['MONTH_NAME'].str.upper()
     nasa_df['TRANSACTION_ID'] = nasa_df['STATE'] + "_" + nasa_df['YEAR'].astype(str) + "_" + nasa_df['MONTH_NAME']
 
@@ -48,40 +51,32 @@ def run_phase_6():
     merged_df['ALL_ITEMS'] = merged_df['NASA_ITEMS'] + merged_df['ITEMS']
 
     print("4. Applying Temporal Sequencing (3-Month Lags)...")
-    # To shift sequence correctly, we must sort chronologically
     merged_df['DATE'] = pd.to_datetime(merged_df['YEAR'].astype(str) + '-' + merged_df['MONTH_NUM'].astype(str) + '-01')
     merged_df = merged_df.sort_values(['STATE', 'DATE'])
 
-    # Helper function to prefix lagged items
-    def prefix_items(items, prefix):
+    def list_combiner(items, prefix):
         if not isinstance(items, list): return []
         return [f"{prefix}_{item}" for item in items]
 
-    # Create historical lag columns by state
     merged_df['LAG1'] = merged_df.groupby('STATE')['ALL_ITEMS'].shift(1)
     merged_df['LAG2'] = merged_df.groupby('STATE')['ALL_ITEMS'].shift(2)
     merged_df['LAG3'] = merged_df.groupby('STATE')['ALL_ITEMS'].shift(3)
 
-    # Apply T-X prefixes
-    merged_df['LAG1'] = merged_df['LAG1'].apply(lambda x: prefix_items(x, 'T-1'))
-    merged_df['LAG2'] = merged_df['LAG2'].apply(lambda x: prefix_items(x, 'T-2'))
-    merged_df['LAG3'] = merged_df['LAG3'].apply(lambda x: prefix_items(x, 'T-3'))
+    merged_df['LAG1'] = merged_df['LAG1'].apply(lambda x: list_combiner(x, 'T-1'))
+    merged_df['LAG2'] = merged_df['LAG2'].apply(lambda x: list_combiner(x, 'T-2'))
+    merged_df['LAG3'] = merged_df['LAG3'].apply(lambda x: list_combiner(x, 'T-3'))
 
-    # Combine all historical triggers + current events into final sequence transaction
     merged_df['FINAL_TRANSACTION'] = merged_df['LAG3'] + merged_df['LAG2'] + merged_df['LAG1'] + merged_df['ALL_ITEMS']
 
-    # Drop rows where lag features are null (the first 3 months of 2005 have no history)
     final_df = merged_df.dropna(subset=['LAG3']).copy()
 
-    # Format for MongoDB payload
     output_df = final_df[['TRANSACTION_ID', 'STATE', 'YEAR', 'MONTH_NAME', 'FINAL_TRANSACTION']].rename(
         columns={'FINAL_TRANSACTION': 'ITEMS', 'MONTH_NAME': 'MONTH'}
     )
 
-    print(f"5. Saving {len(output_df)} sequential transactions...")
     out_path = os.path.join(PROCESSED_DATA_PATH, "sequenced_transactions.json")
     output_df.to_json(out_path, orient="records", lines=True)
-    print(f"Phase 6 Complete! Saved to {out_path}. Ready for Re-Ingestion.")
+    print(f"Phase 6 Complete! Dataset is now fused properly.")
 
 if __name__ == "__main__":
     run_phase_6()

@@ -27,7 +27,7 @@ st.markdown("Mining cascading climate patterns using Multi-Level Association Rul
 
 # --- Sidebar Controls ---
 st.sidebar.header("Mining Parameters")
-min_support = st.sidebar.slider("Minimum Support Threshold", 0.005, 0.10, 0.01, 0.005)
+min_support = st.sidebar.slider("Minimum Support Threshold", 0.01, 0.20, 0.02, 0.01)
 min_confidence = st.sidebar.slider("Minimum Confidence Threshold", 0.1, 1.0, 0.2, 0.1)
 
 st.sidebar.markdown("""

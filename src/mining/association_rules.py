@@ -3,7 +3,7 @@ from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import fpgrowth, association_rules
 
 class RuleMiner:
-    def __init__(self, min_support=0.005, min_confidence=0.1):
+    def __init__(self, min_support=0.02, min_confidence=0.1):
         self.min_support = min_support
         self.min_confidence = min_confidence
         
@@ -36,7 +36,7 @@ class RuleMiner:
         df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
 
         print(f"2. Finding frequent itemsets (min_support={self.min_support})...")
-        frequent_itemsets = fpgrowth(df_encoded, min_support=self.min_support, use_colnames=True)
+        frequent_itemsets = fpgrowth(df_encoded, min_support=self.min_support, use_colnames=True, max_len=4)
         
         if frequent_itemsets.empty:
             print("No frequent itemsets found. Try lowering min_support.")
