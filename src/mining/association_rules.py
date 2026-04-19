@@ -36,16 +36,18 @@ class RuleMiner:
         df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
 
         print(f"2. Finding frequent itemsets (min_support={self.min_support})...")
-        frequent_itemsets = fpgrowth(df_encoded, min_support=self.min_support, use_colnames=True, max_len=4)
+        frequent_itemsets = fpgrowth(df_encoded, min_support=self.min_support, use_colnames=True, max_len=3)
         
         if frequent_itemsets.empty:
             print("No frequent itemsets found. Try lowering min_support.")
             return pd.DataFrame()
-
+        
+        print(f"-> Found {len(frequent_itemsets)} frequent itemsets. Calculating math logic...")
         print(f"3. Generating association rules (min_confidence={self.min_confidence})...")
         rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=self.min_confidence)
         
         if rules.empty:
+            print("No association rules found. Try lowering min_confidence.")
             return rules
             
         print("4. Filtering rules for Early Warning Intelligence...")

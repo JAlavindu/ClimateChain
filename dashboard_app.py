@@ -12,6 +12,20 @@ from src.config import MONGO_URI
 st.set_page_config(page_title="ClimateChain Early Warning System", layout="wide")
 
 @st.cache_data
+def fetch_transactions_from_db():
+    """Downloads data from Mongo ONCE per session. Never reruns when sliders move."""
+    mongo = MongoManager(uri=MONGO_URI)
+    cursor = mongo.collection.find({}, {"_id": 0, "ITEMS": 1})
+    transactions = [doc["ITEMS"] for doc in cursor if "ITEMS" in doc and len(doc["ITEMS"]) > 1]
+    return transactions
+
+@st.cache_data
+def run_mining(_transactions, min_supp, min_conf):
+    """Mines the rules. The underscore in _transactions tells Streamlit not to hash the massive dataset."""
+    miner = RuleMiner(min_support=min_supp, min_confidence=min_conf)
+    return miner.mine_rules(_transactions)
+
+@st.cache_data
 def load_and_mine_data(min_supp, min_conf):
     """Loads data from Mongo and mines rules. Cached so it doesn't query constantly."""
     mongo = MongoManager(uri=MONGO_URI)
@@ -27,8 +41,8 @@ st.markdown("Mining cascading climate patterns using Multi-Level Association Rul
 
 # --- Sidebar Controls ---
 st.sidebar.header("Mining Parameters")
-min_support = st.sidebar.slider("Minimum Support Threshold", 0.01, 0.20, 0.02, 0.01)
-min_confidence = st.sidebar.slider("Minimum Confidence Threshold", 0.1, 1.0, 0.2, 0.1)
+min_support = st.sidebar.slider("Minimum Support Threshold", 0.01, 0.10, 0.05, 0.01)
+min_confidence = st.sidebar.slider("Minimum Confidence Threshold", 0.1, 1.0, 0.3, 0.1)
 
 st.sidebar.markdown("""
 ---
@@ -37,6 +51,10 @@ st.sidebar.markdown("""
 """)
 
 # --- Process Data ---
+with st.spinner("Connecting to database..."):
+    # This runs exactly once!
+    transactions = fetch_transactions_from_db()
+    
 with st.spinner("Querying NoSQL database and mining rules..."):
     rules_df = load_and_mine_data(min_support, min_confidence)
 
