@@ -3,7 +3,7 @@ from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import fpgrowth, association_rules
 
 class RuleMiner:
-    def __init__(self, min_support=0.02, min_confidence=0.1):
+    def __init__(self, min_support=0.05, min_confidence=0.3):
         self.min_support = min_support
         self.min_confidence = min_confidence
         
