@@ -2,6 +2,8 @@ import pandas as pd
 import json
 import os
 from src.config import PROCESSED_DATA_PATH, RAW_DATA_PATH
+from src.data_pipeline.outlier_detector import OutlierDetector
+from src.data_pipeline.cluster_analysis import ClimateClusterer
 
 def run_phase_6():
     print("1. Loading NOAA Transactions and NASA Climate Data...")
@@ -12,6 +14,14 @@ def run_phase_6():
     nasa_df = pd.read_csv(nasa_path)
 
     print("2. Discretizing NASA Data (Percentile-based Anomalies)...")
+    outlier_detector = OutlierDetector(contamination=0.01)
+    nasa_df = outlier_detector.detect_anomalies(nasa_df, features=['T2M', 'PRECTOTCORR'])
+
+    # B. Cluster Analysis
+    clusterer = ClimateClusterer(n_clusters=4)
+    cluster_mapping = clusterer.cluster_states(nasa_df)
+    nasa_df = pd.merge(nasa_df, cluster_mapping, on='STATE', how='left')
+    
     def discretize_temp(x):
         return pd.qcut(x, q=5, labels=['EXTREME_COLD', 'COLD', 'NORMAL_T', 'WARM', 'EXTREME_HEAT'], duplicates='drop')
 
