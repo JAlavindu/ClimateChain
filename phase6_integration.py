@@ -21,7 +21,7 @@ def run_phase_6():
     clusterer = ClimateClusterer(n_clusters=4)
     cluster_mapping = clusterer.cluster_states(nasa_df)
     nasa_df = pd.merge(nasa_df, cluster_mapping, on='STATE', how='left')
-    
+
     def discretize_temp(x):
         return pd.qcut(x, q=5, labels=['EXTREME_COLD', 'COLD', 'NORMAL_T', 'WARM', 'EXTREME_HEAT'], duplicates='drop')
 
@@ -37,6 +37,13 @@ def run_phase_6():
             items.append(str(row['TEMP_CAT']))
         if row['RAIN_CAT'] in ['SEVERE_DROUGHT', 'EXTREME_RAIN']:
             items.append(str(row['RAIN_CAT']))
+            
+        # Add our new analytics!
+        if row.get('is_anomalous_month', False):
+            items.append("CLIMATE_ANOMALY")
+        if pd.notna(row.get('CLIMATE_CLUSTER')):
+            items.append(str(row['CLIMATE_CLUSTER']))
+            
         return items
 
     nasa_df['NASA_ITEMS'] = nasa_df.apply(extract_nasa_items, axis=1)
