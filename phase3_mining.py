@@ -10,10 +10,21 @@ def run_phase_3():
     
     # Query the collection for all transactions
     cursor = mongo.collection.find({}, {"_id": 0, "ITEMS": 1})
+
+    noise_items = {'WARM', 'COLD', 'WET', 'DRY', 'NORMAL_T', 'NORMAL_R',
+                   'T-1_WARM', 'T-1_COLD', 'T-1_WET', 'T-1_DRY', 'T-1_NORMAL_T', 'T-1_NORMAL_R',
+                   'T-2_WARM', 'T-2_COLD', 'T-2_WET', 'T-2_DRY', 'T-2_NORMAL_T', 'T-2_NORMAL_R',
+                   'T-3_WARM', 'T-3_COLD', 'T-3_WET', 'T-3_DRY', 'T-3_NORMAL_T', 'T-3_NORMAL_R'}
     
     # Extract just the lists of items
-    transactions = [doc["ITEMS"] for doc in cursor if "ITEMS" in doc and len(doc["ITEMS"]) > 1]
-    
+    transactions = []
+    for doc in cursor:
+        if "ITEMS" in doc and len(doc["ITEMS"]) > 1:
+            # Strip noise items to prevent FP-Growth memory explosion
+            cleaned = [item for item in doc["ITEMS"] if item not in noise_items]
+            if len(cleaned) > 1:
+                transactions.append(cleaned)
+
     print(f"Loaded {len(transactions)} multi-event transactions from NoSQL DB.")
     
     miner = RuleMiner(min_support=0.05, min_confidence=0.3)
