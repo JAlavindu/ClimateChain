@@ -1,0 +1,9 @@
+pandas
+streamlit
+pyvis
+mlxtend
+pymongo
+python-dotenv
+requests
+networkx
+scikit-learn
