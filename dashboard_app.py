@@ -16,7 +16,20 @@ def fetch_transactions_from_db():
     """Downloads data from Mongo ONCE per session. Never reruns when sliders move."""
     mongo = MongoManager(uri=MONGO_URI)
     cursor = mongo.collection.find({}, {"_id": 0, "ITEMS": 1})
-    transactions = [doc["ITEMS"] for doc in cursor if "ITEMS" in doc and len(doc["ITEMS"]) > 1]
+
+    noise_items = {'WARM', 'COLD', 'WET', 'DRY', 'NORMAL_T', 'NORMAL_R',
+                   'T-1_WARM', 'T-1_COLD', 'T-1_WET', 'T-1_DRY', 'T-1_NORMAL_T', 'T-1_NORMAL_R',
+                   'T-2_WARM', 'T-2_COLD', 'T-2_WET', 'T-2_DRY', 'T-2_NORMAL_T', 'T-2_NORMAL_R',
+                   'T-3_WARM', 'T-3_COLD', 'T-3_WET', 'T-3_DRY', 'T-3_NORMAL_T', 'T-3_NORMAL_R'}
+    
+    transactions = []
+    for doc in cursor:
+        if "ITEMS" in doc and len(doc["ITEMS"]) > 1:
+            # Strip noise items to prevent FP-Growth memory explosion
+            cleaned = [item for item in doc["ITEMS"] if item not in noise_items]
+            if len(cleaned) > 1:
+                transactions.append(cleaned)
+                
     return transactions
 
 @st.cache_data
@@ -54,7 +67,7 @@ st.sidebar.markdown("""
 with st.spinner("Connecting to database..."):
     # This runs exactly once!
     transactions = fetch_transactions_from_db()
-    
+
 with st.spinner("Querying NoSQL database and mining rules..."):
     rules_df = load_and_mine_data(min_support, min_confidence)
 
