@@ -111,6 +111,14 @@ ClimateChain uses **MongoDB Atlas** as its document store. Each document represe
 
 Compound spatial-temporal indexes are applied programmatically — indexing on `[state, year, month]` — to ensure that the most common query pattern (retrieve all events for a given region and time window) executes efficiently without full collection scans.
 
+### 2.5 Outlier Analysis
+
+To successfully satisfy the core data mining functions taught in the curriculum, ClimateChain integrates Outlier Analysis dynamically. Rather than treating raw meteorological variance merely as numeric peaks, the system deploys an **Isolation Forest**—an unsupervised learning algorithm built into the ETL pipeline. By analyzing the continuous multivariate space of NASA's climate features (e.g., combinations of wind, humidity, and heat), the algorithm isolates the most extreme historical statistical anomalies. These occurrences are explicitly codified as discrete `CLIMATE_ANOMALY` events and injected directly into the NoSQL Market Basket. This allows the FP-Growth engine to successfully correlate genuine statistical anomalies against impending disasters.
+
+### 2.6 Cluster Analysis
+
+The predictive association rule framework relies upon understanding spatial risk profiles. Therefore, ClimateChain performs **Cluster Analysis** grouping to map out contiguous risk zones. Implementing a **K-Means** clustering algorithm (with $k=4$), the system calculates historical baselines for continuous meteorological variables to construct purely data-driven climate profiles across the 48 contiguous US states. States are thus tagged with specific identifiers (e.g., `PROFILE_0`, `PROFILE_3`) representing their behavioral profiles. Injecting these cluster labels into the transactional market baskets prevents the FP-Growth engine from merely mapping political boundaries, dynamically allowing the algorithm to trigger distinct cascading rules based entirely on shared empirical behavior.
+
 ---
 
 ## Data Sources & Dataset Description

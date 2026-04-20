@@ -26,11 +26,12 @@ We successfully built a full-stack, research-grade pipeline that automatically i
 The system operates in a multi-step pipeline:
 
 1. **Data Collection:** We ingest discrete disaster data (like Tornadoes or Hail) from NOAA and continuous climate data (Temperature, Precipitation) from NASA.
-2. **Discretization (Making sense of numbers):** We convert continuous numbers into categories. Instead of saying "precipitation was 0.01 inches", we classify it as `EXTREME_DRY`.
-3. **Temporal Lagging (The "Time Machine"):** To make the system *predictive* rather than just *observational*, we shift the data backward in time. We label events as `T-1` (1 month ago), `T-2` (2 months ago), and `T-3` (3 months ago).
-4. **Transaction Grouping:** We group everything that happened in a specific State and Month into a single "Transaction" (just like a shopping basket).
-5. **Pattern Mining:** We feed these baskets into our algorithm to find the cascading rules.
-6. **Filtering:** We strip out "noise" (like `NORMAL_T` or `WARM`) and only keep strictly predictive rules (where Past Triggers lead to a Current Disaster).
+2. **Generalization & Discretization (Making sense of numbers):** We convert continuous numbers into categories using quintile binning. Instead of saying "precipitation was 0.01 inches", we classify it as `SEVERE_DROUGHT`.
+3. **Outlier Analysis & Cluster Analysis:** We dynamically detect extremely anomalous months using *Isolation Forests* (creating a `CLIMATE_ANOMALY` tag) and assign spatial behavioral profiles to states using *K-Means Clustering* (`PROFILE_0`, `PROFILE_1`).
+4. **Temporal Lagging (The "Time Machine"):** To make the system *predictive* rather than just *observational*, we shift the data backward in time. We label events as `T-1` (1 month ago), `T-2` (2 months ago), and `T-3` (3 months ago).
+5. **Transaction Grouping:** We group everything that happened in a specific State and Month into a single "Transaction" (just like a shopping basket).
+6. **Association Rule Mining:** We feed these baskets into our FP-Growth algorithm to find the cascading rules.
+7. **Filtering:** We strip out "noise" (like `NORMAL_T` or `WARM`) and only keep strictly predictive rules (where Past Triggers lead to a Current Disaster).
 
 
 ---
@@ -87,6 +88,8 @@ Every technology in this stack was chosen to solve specific architectural bottle
   * *Why:* Weather data is incredibly "sparse." One month in Texas might have 50 unique weather events, while the same month in Rhode Island might have 0. If we used a traditional SQL database, we would have thousands of empty columns. A NoSQL Document DB allows us to store lists of variables dynamically, which perfectly matches our "shopping basket" transaction model.
 * **mlxtend (Machine Learning Library):**
   * *Why:* This library contains a highly optimized, production-ready implementation of the FP-Growth algorithm.
+* **scikit-learn:**
+  * *Why:* Powers the core Data Mining functions like Outlier Analysis (Isolation Forest) and Cluster Analysis (K-Means) to identify rare atmospheric anomalies and map states to regional risk profiles.
 * **Streamlit & PyVis (Frontend UI):**
   * *Why:* Streamlit allows us to build powerful, interactive web dashboards purely in Python without needing to write a separate React/Angular frontend. PyVis powers the interactive, physics-based network visualization, making complex hierarchical data instantly readable.
 

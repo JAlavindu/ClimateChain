@@ -21,7 +21,7 @@ class ClimateClusterer:
         
         # 1. Aggregate continuous features to get the historical baseline for each state
         # We use T2M (Temperature) and PRECTOTCORR (Precipitation) as seen in your phase 6
-        state_profiles = nasa_df.groupby('STATE')[['T2M', 'PRECTOTCORR']].mean().reset_init()
+        state_profiles = nasa_df.groupby('STATE')[['T2M', 'PRECTOTCORR']].mean().reset_index()
         
         # 2. Scale the data (K-Means is distance-based, so scaling is mandatory)
         X_scaled = self.scaler.fit_transform(state_profiles[['T2M', 'PRECTOTCORR']])

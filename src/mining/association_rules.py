@@ -18,8 +18,11 @@ class RuleMiner:
     def has_noaa_disaster(self, items):
         """Returns True if the consequent contains at least one current-month NOAA disaster."""
         for item in items:
-            # If it doesn't start with T- and it's not a NASA base, it MUST be a NOAA disaster event (e.g. WILDFIRE)
-            if not item.startswith("T-") and item not in self.nasa_bases:
+            # If it doesn't start with T-, isn't a NASA base, isn't a PROFILE, and isn't an anomaly flag...
+            if (not item.startswith("T-") and 
+                item not in self.nasa_bases and 
+                not item.startswith("PROFILE_") and 
+                item != "CLIMATE_ANOMALY"):
                 return True
         return False
 
@@ -60,7 +63,11 @@ class RuleMiner:
         
         # 3. Clean up the output: Strip non-disaster "noise" from the consequents for cleaner display
         def isolate_disaster(items):
-            return frozenset(item for item in items if not item.startswith("T-") and item not in self.nasa_bases)
+            return frozenset(item for item in items 
+                             if not item.startswith("T-") 
+                             and item not in self.nasa_bases
+                             and not item.startswith("PROFILE_")
+                             and item != "CLIMATE_ANOMALY")
             
         rules['consequents'] = rules['consequents'].apply(isolate_disaster)
         

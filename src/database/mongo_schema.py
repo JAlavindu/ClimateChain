@@ -1,9 +1,10 @@
 import pymongo
+import certifi
 import os
 
 class MongoManager:
     def __init__(self, uri="mongodb://localhost:27017/", db_name="climate_chain"):
-        self.client = pymongo.MongoClient(uri)
+        self.client = pymongo.MongoClient(uri, tlsCAFile=certifi.where())
         self.db = self.client[db_name]
         self.collection = self.db["transactions"]
         
